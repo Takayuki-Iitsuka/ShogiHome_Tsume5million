@@ -1,0 +1,66 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            os_short: win
+            variant: installer
+          - os: windows
+            os_short: win
+            variant: portable
+          - os: macos
+            os_short: mac
+            variant: installer
+          - os: ubuntu
+            os_short: linux
+            variant: installer
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - run: git config --global core.autocrlf false
+        if: matrix.os == 'windows'
+      - uses: actions/checkout@v6.0.3
+      - uses: actions/setup-node@v6.4.0
+        with:
+          node-version: lts/*
+          cache: "npm"
+      - run: npm install -g npm@latest
+      - run: npm version
+      - run: npm ci --no-audit --no-fund --prefer-online
+      - run: npm run electron:build
+        if: matrix.variant != 'portable'
+      - run: npm run electron:portable
+        if: matrix.variant == 'portable'
+      - run: node scripts/archive.mjs ${{ matrix.os_short }} ${{ github.ref_name }} ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}${{ matrix.variant == 'portable' && '-portable' || '' }}-release
+          path: dist/release-*.zip
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.3
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub Release
+        run: |
+          gh release create "$TAG_NAME" \
+            --title "ShogiHome $TAG_NAME" \
+            --draft \
+            dist/release-*.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
