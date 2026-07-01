@@ -88,7 +88,7 @@
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/test-utils": "^2.2.1",
     "archiver": "^7.0.1",
-    "concurrently": "^9.2.3",
+    "concurrently": "^10.0.3",
     "depcheck": "^1.4.7",
     "electron": "^42.5.0",
     "electron-builder": "^26.15.3",
