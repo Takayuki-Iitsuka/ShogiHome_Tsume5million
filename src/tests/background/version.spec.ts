@@ -349,46 +349,6 @@ describe("version", () => {
     expect(status.updatedMs).toBe(time25HoursAfter);
   });
 
-  it("mac", async () => {
-    reset({
-      knownStable: "1.0.3",
-      knownLatest: "1.1.0",
-      stable: "1.0.4",
-      latest: "1.1.1",
-      remoteFileName: "release-mac.json",
-    });
-    vi.stubGlobal("process", { platform: "darwin" });
-    vi.setSystemTime(time25HoursAfter);
-    vi.spyOn(electron, "getAppVersion").mockReturnValue("v1.1.0");
-    const notify = vi.fn();
-    await checkUpdates(notify);
-    expect(notify.mock.calls).toHaveLength(1);
-    expect(notify.mock.calls[0][0]).toBe("最新版 v1.1.1 がリリースされました！");
-    expect(notify.mock.calls[0][1]).toBe("https://link/to/latest");
-    expect(server.accessCount).toBe(1);
-    expect(server.invalidCount).toBe(0);
-  });
-
-  it("linux", async () => {
-    reset({
-      knownStable: "1.0.3",
-      knownLatest: "1.1.0",
-      stable: "1.0.4",
-      latest: "1.1.1",
-      remoteFileName: "release-linux.json",
-    });
-    vi.stubGlobal("process", { platform: "linux" });
-    vi.setSystemTime(time25HoursAfter);
-    vi.spyOn(electron, "getAppVersion").mockReturnValue("v1.1.0");
-    const notify = vi.fn();
-    await checkUpdates(notify);
-    expect(notify.mock.calls).toHaveLength(1);
-    expect(notify.mock.calls[0][0]).toBe("最新版 v1.1.1 がリリースされました！");
-    expect(notify.mock.calls[0][1]).toBe("https://link/to/latest");
-    expect(server.accessCount).toBe(1);
-    expect(server.invalidCount).toBe(0);
-  });
-
   it("fallback", async () => {
     reset({
       knownStable: "1.0.3",

@@ -1,7 +1,3 @@
-export function escapePosixArg(arg: string): string {
-  return `'${arg.replace(/'/g, `'\\''`)}'`;
-}
-
 export function escapeWinArg(arg: string): string {
   if (arg.length === 0) {
     return '""';
@@ -21,14 +17,4 @@ export function escapeWinArg(arg: string): string {
   }
   result += "\\".repeat(bs * 2) + '"';
   return result;
-}
-
-export function escapeLinuxDesktopToken(s: string): string {
-  return `"${s
-    .replace(/\\/g, "\\\\")
-    .replace(/%/g, "%%")
-    .replace(/"/g, '\\"')
-    .replace(/`/g, "\\`")
-    .replace(/\$/g, "\\$")
-    .replace(/[\r\n\t]/g, " ")}"`;
 }

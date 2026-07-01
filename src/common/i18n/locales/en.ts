@@ -878,4 +878,18 @@ export const en: Texts = {
   heapUsageExceedsNGBMayHang(gb: number): string {
     return `Memory usage has exceeded ${gb} GB. If the upward trend continues, the app may hang.`;
   },
+  // Tsume Database
+  tsumeDatabase: "Tsume DB",
+  tumeDataDirectoryNotSet: "Tsume data directory is not set.",
+  selectTsumeDataDirectory: "Select Folder",
+  buildingTsumeIndex: "Building index...",
+  randomProblem: "Random",
+  loadToBoard: "Load to Board",
+  problemNumber: "Problem #",
+  mate3: "3-move Mate",
+  mate5: "5-move Mate",
+  mate7: "7-move Mate",
+  mate9: "9-move Mate",
+  mate11: "11-move Mate",
+  tsumeFileNotFound: "Tsume file not found: ",
 };

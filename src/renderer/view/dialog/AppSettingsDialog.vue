@@ -15,8 +15,6 @@
           :items="[
             { label: '日本語', value: Language.JA },
             { label: 'English', value: Language.EN },
-            { label: '繁體中文', value: Language.ZH_TW },
-            { label: 'Tiếng Việt', value: Language.VI },
           ]"
         />
       </div>

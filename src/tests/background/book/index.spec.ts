@@ -300,15 +300,19 @@ describe("background/book", () => {
     );
     await saveBook(defaultBookSession, tempFilePath);
     const output = fs.readFileSync(tempFilePath, "utf-8");
-    expect(output).toBe(`#YANEURAOU-DB2016 1.00
-sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/2P7/PP1PPPPPP/1B5R1/LNSGKGSNL w - 1
-3c3d 6g6f -32 none 
-sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1
-2g2f 8c8d 42 20 123
-#ibisha
-#popular
-7g7f 3c3d none none 
-`);
+    expect(output).toBe(
+      [
+        "#YANEURAOU-DB2016 1.00",
+        "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/2P7/PP1PPPPPP/1B5R1/LNSGKGSNL w - 1",
+        "3c3d 6g6f -32 none ",
+        "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1",
+        "2g2f 8c8d 42 20 123",
+        "#ibisha",
+        "#popular",
+        "7g7f 3c3d none none ",
+        "",
+      ].join("\r\n"),
+    );
   });
 
   describe("updateBookMove", () => {

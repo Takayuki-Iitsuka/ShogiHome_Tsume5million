@@ -112,6 +112,9 @@ export function setup(): void {
       case MenuEvent.EXPORT_POSITION_IMAGE:
         store.showExportBoardImageDialog();
         break;
+      case MenuEvent.TSUME_DATABASE:
+        store.showTsumeDatabaseDialog();
+        break;
       case MenuEvent.COPY_RECORD:
         store.copyRecordKIF();
         break;

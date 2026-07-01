@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ShogiHome is a cross-platform GUI application for Japanese chess (Shogi). It supports playing against USI protocol-compatible engines, editing/analyzing game records (kifu), and multiple file formats (KIF, KIFU, KI2, CSA, JKF). Built with Electron for desktop and also runs as a web/PWA app.
+ShogiHome is a Windows-only GUI application for Japanese chess (Shogi). It supports playing against USI protocol-compatible engines, editing/analyzing game records (kifu), and multiple file formats (KIF, KIFU, KI2, CSA, JKF). Built with Electron for desktop and also runs as a web/PWA app.
 
 ## Common Commands
 

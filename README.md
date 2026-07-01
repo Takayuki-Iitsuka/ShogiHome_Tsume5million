@@ -1,156 +1,161 @@
 <img width="200" src="./docs/icon.png" />
 
-# ShogiHome
+# ShogiHome Tsume5million
 
-[![Test](https://github.com/sunfish-shogi/shogihome/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/sunfish-shogi/shogihome/actions/workflows/test.yml)
-[![Test/CLI](https://github.com/sunfish-shogi/shogihome/actions/workflows/test-cli.yml/badge.svg?branch=main&event=push)](https://github.com/sunfish-shogi/shogihome/actions/workflows/test-cli.yml)
-[![Audit](https://github.com/sunfish-shogi/shogihome/actions/workflows/audit.yml/badge.svg)](https://github.com/sunfish-shogi/shogihome/actions/workflows/audit.yml)
-[![codecov](https://codecov.io/gh/sunfish-shogi/shogihome/branch/main/graph/badge.svg?token=TLSQXAIJFY)](https://codecov.io/gh/sunfish-shogi/shogihome)
+本家 [ShogiHome](https://github.com/sunfish-shogi/shogihome) をフォークし、
+[やねうら王が公開した詰将棋500万問データセット](https://yaneuraou.yaneu.com/2020/12/25/christmas-present/)
+を直接 ShogiHome から読み込んで演習できるよう改修したプロジェクトです。
 
-[English](./README.en.md)
+## 詰将棋DB機能
+
+### データファイルの準備
+
+[やねうら王クリスマスプレゼント2020](https://yaneuraou.yaneu.com/2020/12/25/christmas-present/)
+から詰将棋500万問データセットをダウンロードし、以下の場所に配置してください。
+
+```
+mate3_5_7_9_11\
+    mate3.sfen   （3手詰め  約100万問）
+    mate5.sfen   （5手詰め  約100万問）
+    mate7.sfen   （7手詰め  約100万問）
+    mate9.sfen   （9手詰め  約100万問）
+    mate11.sfen  （11手詰め 約100万問）
+```
+
+### 使い方
+
+1. ShogiHome を起動します（Electron版のみ対応）
+2. ファイルメニュー →「詰将棋DB」を選択
+3. 初回はデータフォルダを選択します（`mate3_5_7_9_11` ディレクトリ）
+4. 手数ボタン（3/5/7/9/11手）を選択するとインデックスを構築します
+5. 問題番号を指定するか「ランダム」ボタンで問題を選択します
+6. 「盤面に設定」ボタンで将棋盤に問題を読み込みます
+
+後手番の局面は自動的に先手番（攻め方先手）の形に変換されます。
+
+## フォーク元
+
+- 本家リポジトリ: https://github.com/sunfish-shogi/shogihome
+- 本家バージョン: v1.28.0 をベースに改修
+
+本プロジェクトは本家の MIT ライセンスのもとで改変・配布しています。
+
+## ShogiHome について
 
 将棋の GUI アプリです。
 コンピューターとの対局や棋譜の編集・検討ができます。
 
 [将棋所](http://shogidokoro2.stars.ne.jp/)と同様に [USI プロトコル](http://shogidokoro2.stars.ne.jp/usi.html) 対応の思考エンジンを利用できます。
 
-## コンセプト
-
-私達は既に将棋所や[ShogiGUI](http://shogigui.siganus.com/)などの洗練されたソフトウェアで将棋の対局や研究が可能です。
-しかし、その多くは個人がクローズドに開発しているものです。
-コンピューター将棋界の権威ある開発者も[ソースコード公開の必要性に言及](https://yaneuraou.yaneu.com/2022/01/15/new-gui-for-shogi-is-needed-to-improve-the-usi-protocol/)しています。
-ShogiHomeはソースコードを公開しており、そして低い制限のもとで自由に利用・改変が可能です。
-
-ShogiHome は Web ベースの GUI フレームワークである [Electron](https://www.electronjs.org/) を使っています。
-Web の技術を使うことで将来の幅広い活用を目指しており、機能は限られますが通常のブラウザでも動作します。
-Electron は Chromium をバンドルするため、どの OS でも同じ操作性と品質が担保しやすいのも特徴です。
-
-昨今では 2in1 タブレットやコンバーチブル型 PC の普及により、PC 向けの OS でもタッチパネルを使って将棋の対局ができるようになりました。
-しかし、 PC 向けの伝統的なアプリケーションは UI コンポーネントが細かく、タッチ操作との相性がよくありません。
-ShogiHome ではタッチ操作のしやすさも重視して UI を設計しています。
-
-## Website
-
-https://sunfish-shogi.github.io/shogihome/
-
-ウェブサイトではブラウザ版アプリを試すことができます。
-
-## Wiki
-
-https://github.com/sunfish-shogi/shogihome/wiki
-
-使い方や設計に関する情報はこちらを参照してください。
-
-## スクリーンショット
-
-![スクリーンショット1](docs/screenshots/screenshot001.png)
-
-![スクリーンショット3](docs/screenshots/screenshot003.png)
-
-![モバイル](docs/screenshots/mobile001.png)
-
-## ダウンロード
-
-[Releases](https://github.com/sunfish-shogi/shogihome/releases) からダウンロードできます。
-
-## エンジン開発者の方へ
-
-USI や CSA プロトコルの通信ログの出力はデフォルトで無効です。
-[こちら](https://github.com/sunfish-shogi/shogihome/wiki/%E9%96%8B%E7%99%BA%E8%80%85%E5%90%91%E3%81%91%E6%A9%9F%E8%83%BD%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9#%E3%83%AD%E3%82%B0) を参考に設定してください。
-
-スクリプトファイルをエンジンとして登録できないという問い合わせが複数来ています。 [シェルスクリプトやインタプリタ型言語でエンジンを実行したい方へ](https://github.com/sunfish-shogi/shogihome/wiki/%E3%82%B7%E3%82%A7%E3%83%AB%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%88%E3%82%84%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%97%E3%83%AA%E3%82%BF%E5%9E%8B%E8%A8%80%E8%AA%9E%E3%81%A7%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3%E3%82%92%E5%AE%9F%E8%A1%8C%E3%81%97%E3%81%9F%E3%81%84%E6%96%B9%E3%81%B8) を参考にしてください。
-
-## 不具合報告及びその他の開発協力
-
-[CONTRIBUTING.md](CONTRIBUTING.md) を必ずお読みください。
-
-GitHub のアカウントをお持ちの方は Issue/PullRequest を活用してください。
-大きな変更はいきなり着手せず Issue を作成してください。
-Issue や PullRequest を作成する際は、必ず Template を使用してください。
-
-GitHub アカウントをお持ちでない場合は [送信フォーム](https://form.run/@sunfish-shogi-1650819491) でご連絡ください。
-
-開発の進捗状況は [プロジェクトボード](https://github.com/users/sunfish-shogi/projects/1/views/1) を参照してください。
-
-## セキュリティ
-
-ShogiHome を自分でビルドする場合は [ShogiHome の開発をするときのセキュリティ](https://note.com/ryosuke_kubo/n/n790345a2b9aa) をお読みください。
-
 ## 開発
 
 ### 必要なもの
 
 - Node.js
+- Bun（任意、TypeScript 7.0 移行後の開発基盤候補）
 
-### Setup
+2026年（皇紀2686年・令和8年）7月時点では npm を正本の package manager として扱います。
+Bun は高速な install / script runner として評価中であり、release build は npm 手順を基準にします。
 
-```
-git clone https://github.com/sunfish-shogi/shogihome.git
-cd shogihome
+### セットアップ
+
+```bash
+git clone <このリポジトリ>
+cd ShogiHome_Tsume5million
 npm ci
 ```
 
-### Launch
+Bun を使う場合:
 
+```bash
+bun install
 ```
-# Electron App
+
+`bun.lock` 作成後の再現インストール:
+
+```bash
+bun install --frozen-lockfile
+```
+
+### 起動
+
+```bash
+# Electron アプリ（詰将棋DB機能あり）
 npm run electron:serve
 
-# Web App
+# Web アプリ（詰将棋DB機能なし）
 npm run serve
 # Standard: http://localhost:5173
 # Mobile  : http://localhost:5173/?mobile
 ```
 
-### Release Build
+Bun を使う場合も script 名は同じです。
 
+```bash
+bun run electron:serve
+bun run serve
 ```
-# Electron App (Installer)
+
+### ビルド
+
+```bash
+# Electron アプリ（インストーラー）
 npm run electron:build
 
-# Electron App (Windows Portable App)
+# Electron アプリ（Windows ポータブル版）
 npm run electron:portable
 
-# Web App
+# Web アプリ
 npm run build
 ```
 
-### Unit Tests
+Bun 評価時:
 
+```bash
+bun run electron:build
+bun run electron:portable
+bun run build
 ```
-# test only
+
+### テスト
+
+```bash
 npm test
-
-# coverage report
 npm run coverage
-
-# launch Vitest UI
 npm run test:ui
+```
+
+Bun 評価時:
+
+```bash
+bun run test
+bun run coverage
 ```
 
 ### Lint
 
-```
+```bash
 npm run lint
 ```
 
-## CLI Tools
+### TypeScript 7.0 移行メモ
 
-- [usi-csa-bridge](https://github.com/sunfish-shogi/shogihome/tree/main/src/command/usi-csa-bridge#readme) - USI のエンジンを CSA プロトコルの対局に参加させる。
+TypeScript 7.0 は stable 版公開後に固定します。
+公開前は `typescript@next` または release candidate で検証し、`vue-tsc`、`typescript-eslint`、Vite、Vitest、Electron 関連の互換性を確認します。
+詳細は [TypeScript 7.0 移行・依存更新計画](./Prompt/TypeScript7_Migration_Plan.md) と [技術スタック一覧](./specs/technologies.md) を参照してください。
 
-## Licences
+## ライセンス
 
-### ShogiHome
+### ShogiHome Tsume5million / ShogiHome
 
 [MIT License](LICENSE)
 
-### Icon Images
+### 詰将棋データセット
+
+やねうら王が [Christmas Present 2020](https://yaneuraou.yaneu.com/2020/12/25/christmas-present/) として公開した詰将棋500万問データセットを使用しています。
+データセットの権利はやねうら王に帰属します。
+
+### アイコン画像
 
 [/public/icon](https://github.com/sunfish-shogi/shogihome/tree/main/public/icon) 配下のアイコン画像は [Material Icons](https://google.github.io/material-design-icons/) を使用しています。
 これには [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) が適用されます。
-
-### Dependencies
-
-レンダラープロセスで使用しているライブラリは [THIRD PARTY LICENSES](https://sunfish-shogi.github.io/shogihome/third-party-licenses.html) を参照してください。
-
-Electron と Chromium については electron-builder によって成果物にバンドルされます。

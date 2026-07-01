@@ -17,6 +17,7 @@ const CommentMarker1 = "#";
 const CommentMarker2 = "//";
 const LF = "\n".charCodeAt(0);
 const CR = "\r".charCodeAt(0);
+const returnCode = "\r\n";
 
 type Line = CommentLine | PositionLine | MoveLine;
 
@@ -112,6 +113,10 @@ async function load(input: Readable, nextEntry: (sfen: string, entry: BookEntry)
       if (lineNo === 0) {
         line = line.replace(/^\uFEFF/, "");
       }
+      if (line === "") {
+        lineNo++;
+        continue;
+      }
       const parsed = parseLine(line);
       switch (parsed.type) {
         case "comment":
@@ -168,12 +173,15 @@ async function writeEntry(output: Writable, sfen: string, entry: BookEntry) {
   if (entry.moves.length === 0) {
     return;
   }
-  if (!output.write(SFENMarker + sfen + "\n")) {
+  if (!output.write(SFENMarker + sfen + returnCode)) {
     await events.once(output, "drain");
   }
   if (entry.comment) {
     for (const commentLine of entry.comment.split("\n")) {
-      if (!output.write(CommentMarker1 + commentLine + "\n")) {
+      if (!commentLine) {
+        continue;
+      }
+      if (!output.write(CommentMarker1 + commentLine + returnCode)) {
         await events.once(output, "drain");
       }
     }
@@ -193,13 +201,16 @@ async function writeEntry(output: Writable, sfen: string, entry: BookEntry) {
       (move.depth != undefined ? move.depth.toFixed(0) : DEPTH_NONE) +
       " " +
       (move.count != undefined ? move.count.toFixed(0) : "") +
-      "\n";
+      returnCode;
     if (!output.write(line)) {
       await events.once(output, "drain");
     }
     if (move.comment) {
       for (const commentLine of move.comment.split("\n")) {
-        if (!output.write(CommentMarker1 + commentLine + "\n")) {
+        if (!commentLine) {
+          continue;
+        }
+        if (!output.write(CommentMarker1 + commentLine + returnCode)) {
           await events.once(output, "drain");
         }
       }
@@ -215,7 +226,7 @@ export async function storeYaneuraOuBook(book: YaneBook, output: Writable): Prom
     output.on("finish", resolve);
     output.on("error", reject);
   });
-  output.write(YANEURAOU_BOOK_HEADER_V100 + "\n");
+  output.write(YANEURAOU_BOOK_HEADER_V100 + returnCode);
   for (const sfen of Array.from(book.entries.keys()).sort()) {
     const entry = book.entries.get(sfen) as BookEntry;
     await writeEntry(output, sfen, entry);
@@ -238,7 +249,7 @@ export async function mergeYaneuraOuBook(
     output.on("finish", resolve);
     output.on("error", reject);
   });
-  output.write(YANEURAOU_BOOK_HEADER_V100 + "\n");
+  output.write(YANEURAOU_BOOK_HEADER_V100 + returnCode);
   const patchKeys = Array.from(bookPatch.entries.keys()).sort();
   let patchIndex = 0;
   let lastPatchKey = "";

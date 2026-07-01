@@ -27,8 +27,6 @@ import { default as dayjs } from "dayjs";
 import * as _en from "dayjs/locale/en";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as _ja from "dayjs/locale/ja";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as _zh_tw from "dayjs/locale/zh-tw";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useErrorStore } from "@/renderer/store/error.js";
 
@@ -37,7 +35,6 @@ api.log(LogLevel.INFO, `start renderer process: APP_VERSION=${appInfo.appVersion
 // setup libraries
 import("dayjs/locale/en");
 import("dayjs/locale/ja");
-import("dayjs/locale/zh-tw");
 dayjs.extend(relativeTime);
 Chart.register(
   ScatterController,

@@ -4,7 +4,7 @@ import path from "path";
 import semver from "semver";
 
 const apiURL = "https://api.github.com/repos/sunfish-shogi/shogihome/releases?per_page=100";
-const platformNames = ["win", "mac", "linux"];
+const platformNames = ["win"];
 const distDir = "dist";
 const outputCSV = path.join(distDir, "download-counts.csv");
 

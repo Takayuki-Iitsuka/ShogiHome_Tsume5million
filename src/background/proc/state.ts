@@ -71,17 +71,7 @@ async function getAvailableParallelism(): Promise<number> {
 }
 
 function getOSVersion() {
-  const osVersion = process.getSystemVersion();
-  switch (process.platform) {
-    case "darwin":
-      return `macOS ${osVersion}`;
-    case "win32":
-      return `Windows ${osVersion}`;
-    case "linux":
-      return `Linux ${osVersion}`;
-    default:
-      return `${process.platform} ${osVersion}`;
-  }
+  return `Windows ${process.getSystemVersion()}`;
 }
 
 let osVersion = "";
@@ -105,7 +95,7 @@ export function collectOSState(): OSState {
     cpuTotalTime,
     cpuIdleTime,
     memoryTotal: mem.total,
-    memoryFree: mem.free + (process.platform === "darwin" ? mem.fileBacked : 0),
+    memoryFree: mem.free,
   };
 }
 

@@ -1,9 +1,8 @@
-import { app, BrowserWindow } from "electron";
+import { BrowserWindow } from "electron";
 import {
   getAppState,
   isClosable,
   onClose,
-  openRecord,
   sendError,
   sendNotification,
   setupIPC,
@@ -98,17 +97,6 @@ export function createWindow(onClosed: () => void) {
         return;
       }
       sendError(new Error(`${origin} ${e}`));
-    });
-
-    // macOS では起動後に Finder からファイルを開こうとすると既に存在するプロセスに対して open-file イベントが発生する。
-    app.on("open-file", (event, path) => {
-      getAppLogger().info("on open-file: %s", path);
-      event.preventDefault();
-      if (win.isMinimized()) {
-        win.restore();
-      }
-      win.focus();
-      openRecord(path);
     });
 
     checkUpdates(sendNotification).catch((e) => {

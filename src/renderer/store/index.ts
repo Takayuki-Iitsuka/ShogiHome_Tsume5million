@@ -153,6 +153,7 @@ class Store {
   private _appState = AppState.NORMAL;
   private _customLayout: LayoutProfile | null = null;
   private _isAppSettingsDialogVisible = false;
+  private _isTsumeDatabaseDialogVisible = false;
   private _pvPreview?: PVPreview;
   private usiMonitor = new USIMonitor();
   private blackClock = new Clock();
@@ -514,6 +515,18 @@ class Store {
 
   closeAppSettingsDialog(): void {
     this._isAppSettingsDialogVisible = false;
+  }
+
+  get isTsumeDatabaseDialogVisible(): boolean {
+    return this._isTsumeDatabaseDialogVisible;
+  }
+
+  showTsumeDatabaseDialog(): void {
+    this._isTsumeDatabaseDialogVisible = true;
+  }
+
+  closeTsumeDatabaseDialog(): void {
+    this._isTsumeDatabaseDialogVisible = false;
   }
 
   get usiMonitors(): USIPlayerMonitor[] {

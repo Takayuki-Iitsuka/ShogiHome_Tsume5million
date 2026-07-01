@@ -17,7 +17,7 @@
           fill="gold"
         />
         <image
-          href="/board/grid_square.svg"
+          :href="boardGridImagePath"
           :x="layout.boardImage.x"
           :y="layout.boardImage.y"
           :width="layout.boardImage.width"
@@ -108,6 +108,9 @@ function buildHandText(name: string, hand: ImmutableHand) {
 </script>
 
 <script setup lang="ts">
+const boardGridImagePath =
+  import.meta.env.MODE === "test" ? "" : `${import.meta.env.BASE_URL}board/grid_square.svg`;
+
 function buildParams(size: number) {
   return {
     size: size,

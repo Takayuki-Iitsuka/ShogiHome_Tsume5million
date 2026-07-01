@@ -76,6 +76,10 @@
           <Icon :icon="IconType.BATCH" />
           <div class="label">{{ t.batchConversion }}</div>
         </button>
+        <button v-if="isNative()" @click="onTsumeDatabase">
+          <Icon :icon="IconType.QUIZ" />
+          <div class="label">{{ t.tsumeDatabase }}</div>
+        </button>
         <button v-if="isNative()" @click="onOpenAutoSaveDirectory">
           <Icon :icon="IconType.OPEN_FOLDER" />
           <div class="label">{{ t.openAutoSaveDirectory }}</div>
@@ -220,6 +224,10 @@ const onShare = () => {
 };
 const onBatchConversion = () => {
   store.showBatchConversionDialog();
+  emit("close");
+};
+const onTsumeDatabase = () => {
+  store.showTsumeDatabaseDialog();
   emit("close");
 };
 const onExportImage = () => {

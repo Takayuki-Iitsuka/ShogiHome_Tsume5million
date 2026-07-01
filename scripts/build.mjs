@@ -16,7 +16,6 @@ switch (target) {
 
 builder
   .build({
-    universal: process.platform === "darwin",
     config,
   })
   .then((result) => {

@@ -70,7 +70,7 @@
         v-for="arrow in arrows"
         :key="arrow.id"
         class="arrows"
-        src="/arrow/arrow.svg"
+        :src="arrowImagePath"
         :style="arrow.style"
         style="object-fit: cover; object-position: left top"
       />
@@ -256,6 +256,9 @@ type CandidateMove = {
   move: Move;
   score?: number; // 手番側視点の数値スコア（showArrowScore が有効な場合のみ設定）
 };
+
+const arrowImagePath =
+  import.meta.env.MODE === "test" ? "" : `${import.meta.env.BASE_URL}arrow/arrow.svg`;
 
 type State = {
   pointer: Square | Piece | null;

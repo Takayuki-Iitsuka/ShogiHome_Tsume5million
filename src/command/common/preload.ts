@@ -165,6 +165,19 @@ const bridge: Bridge = {
   onOpenRecord(): void {
     // Do Nothing
   },
+  // 詰将棋データベース（コマンドラインツールでは非対応）
+  async showSelectTsumeDirectoryDialog(): Promise<string> {
+    throw new Error("This feature is not available on command line tool");
+  },
+  async buildTsumeIndex(): Promise<number> {
+    throw new Error("This feature is not available on command line tool");
+  },
+  async getTsumeLines(): Promise<string[]> {
+    throw new Error("This feature is not available on command line tool");
+  },
+  async getRandomTsumeLines(): Promise<string> {
+    throw new Error("This feature is not available on command line tool");
+  },
 
   // Book
   async showOpenBookDialog(): Promise<string> {

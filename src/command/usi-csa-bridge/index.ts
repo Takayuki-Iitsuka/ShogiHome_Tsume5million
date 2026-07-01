@@ -64,7 +64,7 @@ const language = argParser.value(
   "lang",
   `Language which one of: ${Object.values(Language).join(", ")}`,
   Language.JA,
-  [Language.JA, Language.EN, Language.ZH_TW, Language.VI],
+  [Language.JA, Language.EN],
 );
 argParser.parse();
 

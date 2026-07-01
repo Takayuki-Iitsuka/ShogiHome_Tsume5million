@@ -151,6 +151,19 @@ const api: Bridge = {
   onOpenRecord(callback: (path: string) => void): void {
     ipcRenderer.on(Renderer.OPEN_RECORD, (_, path) => callback(path));
   },
+  // 詰将棋データベース
+  async showSelectTsumeDirectoryDialog(): Promise<string> {
+    return await ipcRenderer.invoke(Background.OPEN_TSUME_DIRECTORY);
+  },
+  async buildTsumeIndex(filePath: string): Promise<number> {
+    return await ipcRenderer.invoke(Background.BUILD_TSUME_INDEX, filePath);
+  },
+  async getTsumeLines(filePath: string, lineNumbers: number[]): Promise<string[]> {
+    return await ipcRenderer.invoke(Background.GET_TSUME_LINES, filePath, lineNumbers);
+  },
+  async getRandomTsumeLines(filePath: string, count: number): Promise<string> {
+    return await ipcRenderer.invoke(Background.GET_RANDOM_TSUME_LINES, filePath, count);
+  },
 
   // Book
   async showOpenBookDialog(): Promise<string> {

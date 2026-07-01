@@ -324,6 +324,9 @@ class AppSettingsStore {
   get enableHardwareAcceleration(): boolean {
     return this.merged.enableHardwareAcceleration;
   }
+  get tsumeDataDirectory(): string {
+    return this.merged.tsumeDataDirectory;
+  }
 
   async loadAppSettings(): Promise<void> {
     this.settings = await api.loadAppSettings();

@@ -1,8 +1,6 @@
 import { Language } from "./languages.js";
 import { en } from "./locales/en.js";
 import { ja } from "./locales/ja.js";
-import { zh_tw } from "./locales/zh_tw.js";
-import { vi } from "./locales/vi.js";
 import { Texts } from "./text_template.js";
 
 export const t = ja;
@@ -13,10 +11,6 @@ function getTranslationTable(language: Language): Texts {
       return ja;
     case Language.EN:
       return en;
-    case Language.ZH_TW:
-      return zh_tw;
-    case Language.VI:
-      return vi;
     default:
       return ja;
   }

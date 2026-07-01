@@ -9,12 +9,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
-      USI_ENGINE_JSON: .config/electron-shogi/usi_engine.json
-      USI_CSA_BRIDGE_TMP: /tmp/usi-csa-bridge
+      USI_ENGINE_JSON: AppData\Roaming\electron-shogi\usi_engine.json
+      USI_CSA_BRIDGE_TMP: ${{ runner.temp }}\usi-csa-bridge
     steps:
       # Setup
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v6.0.3
       - uses: actions/setup-node@v6.4.0
         with:
@@ -27,26 +28,14 @@ jobs:
 
       # usi-csa-bridge
       - run: npm run usi-csa-bridge:build
-      - run: mv ./dist/command/usi-csa-bridge ${USI_CSA_BRIDGE_TMP}
+      - run: Move-Item -Path dist\command\usi-csa-bridge -Destination $env:USI_CSA_BRIDGE_TMP
+        shell: pwsh
       - name: Install dependencies for usi-csa-bridge
         run: |
-          set -eux
-          cd ${USI_CSA_BRIDGE_TMP}
+          cd $env:USI_CSA_BRIDGE_TMP
           npm i --no-audit --no-fund
+        shell: pwsh
       - name: Test usi-csa-bridge
         timeout-minutes: 1
-        run: ${USI_CSA_BRIDGE_TMP}/e2e/run-all
-
-      # Electron App
-      - run: npm run electron:build
-      - name: Test --add-engine command
-        timeout-minutes: 1
-        run: |
-          xvfb-run -a ./dist/linux-unpacked/shogihome \
-            --no-sandbox \
-            --add-engine \
-            ./scripts/dummy-usi-engine "Dummy Engine" \
-            10 \
-            H4sIAAAAAAAAE42Sa0+DMBSG/8v53IXLLjpiTCxx0W+axU/GmALd1ggtgWI2F/67KRY4u+FCApyXvs/bHs4eynjDMwYB8DJwnKoUIy7XQvKRyrVQshzFqcgjxYpklDDNgID9AMEelroQcv1gXiXLOASdQkDvciOUjWBsRcILCDzXJZDwFatSDQGslAIC3yytzOKEmQtqYjn0hEyHyF5Pipi5elJ4QgqHSD7e4x3Pcr27R/tslZrAQqTccHETeq2LWFkJh4wvN8LJmd44WjnGh2PomRg6HDNB9vCMPRy2T69uRbjh8RfugxU6fGxqzJ5hti4qjsBN2VLpMZUOUG/MX8+FPJjLpu7/eC4kttyijXgugUxICMyTbe3I2m15UwunR3B6GT7v3K45j8oiddClP6E/j6mR32vSixKCd1g0U0JZ0dx/gMBrtW3u1RY+cDcXB/Nk1rbZ9DibDmR712bXBGiltZKIboWOHrV1h/drAm/L588nVm6QsZMu9RSddOx3x5y485kFvijZrDxAWvHS5Pj/TmNNgEsWpfyRFemuzVixtOT1LzpIE4pLBQAA
-          test "$(cat $HOME/$USI_ENGINE_JSON | jq -r '.engines[].name')" = "Dummy Engine"
-          test "$(cat $HOME/$USI_ENGINE_JSON | jq -r '.engines[].options.FilenameA.value')" = "/path/to/file"
+        run: $env:USI_CSA_BRIDGE_TMP\e2e\run-all
+        shell: pwsh

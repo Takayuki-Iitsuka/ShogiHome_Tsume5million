@@ -15,6 +15,19 @@ import { getTempPathForTesting } from "@/background/proc/env.js";
 
 const tmpdir = path.join(getTempPathForTesting(), "conversion");
 
+function normalizeCRLF(data: Buffer): Uint8Array {
+  const normalized: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === 0x0d && data[i + 1] === 0x0a) {
+      normalized.push(0x0a);
+      i++;
+    } else {
+      normalized.push(data[i]);
+    }
+  }
+  return Uint8Array.from(normalized);
+}
+
 describe("conversion", () => {
   it("individual", async () => {
     const testCases = [
@@ -299,8 +312,8 @@ describe("conversion", () => {
         const relPath = path.relative(tmpdir, filePath);
         const expectedFilePath = path.join("src/tests/testdata/conversion/output", relPath);
         const actual = fs.readFileSync(filePath);
-        const expected = fs.readFileSync(expectedFilePath);
-        expect(actual).toStrictEqual(expected);
+        const expected = normalizeCRLF(fs.readFileSync(expectedFilePath));
+        expect(actual, relPath).toStrictEqual(Buffer.from(expected));
       }
     }
   });

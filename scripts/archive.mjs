@@ -44,15 +44,6 @@ switch (platform) {
       "*.exe",
     );
     break;
-  case "mac":
-    await createArchive(`dist/release-${version}-mac.zip`, "*.dmg");
-    break;
-  case "linux":
-    await Promise.all([
-      createArchive(`dist/release-${version}-linux-appimage.zip`, "*.AppImage"),
-      createArchive(`dist/release-${version}-linux-deb.zip`, "*.deb"),
-    ]);
-    break;
   default:
     throw new Error("unknown platform");
 }

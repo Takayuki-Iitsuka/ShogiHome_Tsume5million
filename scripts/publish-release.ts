@@ -6,8 +6,6 @@ import * as semver from "semver";
 
 const releaseJSON = "docs/release.json";
 const releaseWinJSON = "docs/release-win.json";
-const releaseMacJSON = "docs/release-mac.json";
-const releaseLinuxJSON = "docs/release-linux.json";
 
 const stdio = createInterface({
   input: process.stdin,
@@ -34,12 +32,6 @@ async function inputPlatforms(): Promise<string[]> {
   const paths = [] as string[];
   if (!/^n/i.test(await stdio.question(`Do you want to update ${releaseWinJSON}? [Y/n]:`))) {
     paths.push(releaseWinJSON);
-  }
-  if (!/^n/i.test(await stdio.question(`Do you want to update ${releaseMacJSON}? [Y/n]:`))) {
-    paths.push(releaseMacJSON);
-  }
-  if (!/^n/i.test(await stdio.question(`Do you want to update ${releaseLinuxJSON}? [Y/n]:`))) {
-    paths.push(releaseLinuxJSON);
   }
   return paths;
 }

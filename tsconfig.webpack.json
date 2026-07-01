@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "noEmit": false
+  },
+  "include": ["src/renderer/ipc/preload.ts", "src/command/**/*.ts"]
+}

@@ -1,7 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 
-const fileNames = ["release.json", "release-win.json", "release-mac.json", "release-linux.json"];
+const fileNames = ["release.json", "release-win.json"];
 
 const server = http.createServer((req, res) => {
   for (const fileName of fileNames) {

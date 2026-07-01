@@ -252,6 +252,19 @@ export const webAPI: Bridge = {
   onOpenRecord(): void {
     // Do Nothing
   },
+  // 詰将棋データベース（Electron専用機能）
+  async showSelectTsumeDirectoryDialog(): Promise<string> {
+    throw new Error(t.thisFeatureNotAvailableOnWebApp);
+  },
+  async buildTsumeIndex(): Promise<number> {
+    throw new Error(t.thisFeatureNotAvailableOnWebApp);
+  },
+  async getTsumeLines(): Promise<string[]> {
+    throw new Error(t.thisFeatureNotAvailableOnWebApp);
+  },
+  async getRandomTsumeLines(): Promise<string> {
+    throw new Error(t.thisFeatureNotAvailableOnWebApp);
+  },
 
   // Book
   async showOpenBookDialog(): Promise<string> {

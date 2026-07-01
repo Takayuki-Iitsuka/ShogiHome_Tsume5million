@@ -45,6 +45,19 @@ const mockUSIPlayer = USIPlayer as MockedClass<typeof USIPlayer>;
 const mockAnalysisManager = AnalysisManager as MockedClass<typeof AnalysisManager>;
 const mockMateSearchManager = MateSearchManager as MockedClass<typeof MateSearchManager>;
 
+function normalizeCRLF(data: Buffer): Uint8Array {
+  const normalized: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === 0x0d && data[i + 1] === 0x0a) {
+      normalized.push(0x0a);
+      i++;
+    } else {
+      normalized.push(data[i]);
+    }
+  }
+  return Uint8Array.from(normalized);
+}
+
 const sampleKIF = `
 手合割：平手
 手数----指手---------消費時間--
@@ -1050,7 +1063,7 @@ describe("store/index", () => {
     await new Promise((resolve) => setTimeout(resolve));
     expect(useErrorStore().hasError).toBeFalsy();
     expect(new Uint8Array(mockAPI.saveRecord.mock.calls[0][1])).toEqual(
-      new Uint8Array(fs.readFileSync("src/tests/testdata/encoding/sjis.kif")),
+      normalizeCRLF(fs.readFileSync("src/tests/testdata/encoding/sjis.kif")),
     );
 
     // KI2: save as .ki2, expect SJIS output matching sjis.ki2
@@ -1059,7 +1072,7 @@ describe("store/index", () => {
     await new Promise((resolve) => setTimeout(resolve));
     expect(useErrorStore().hasError).toBeFalsy();
     expect(new Uint8Array(mockAPI.saveRecord.mock.calls[1][1])).toEqual(
-      new Uint8Array(fs.readFileSync("src/tests/testdata/encoding/sjis.ki2")),
+      normalizeCRLF(fs.readFileSync("src/tests/testdata/encoding/sjis.ki2")),
     );
   });
 
@@ -1076,7 +1089,7 @@ describe("store/index", () => {
     await new Promise((resolve) => setTimeout(resolve));
     expect(useErrorStore().hasError).toBeFalsy();
     expect(new Uint8Array(mockAPI.saveRecord.mock.calls[0][1])).toEqual(
-      new Uint8Array(fs.readFileSync("src/tests/testdata/encoding/utf8.kif")),
+      normalizeCRLF(fs.readFileSync("src/tests/testdata/encoding/utf8.kif")),
     );
 
     // KI2: save as .ki2, expect UTF-8 output matching utf8.ki2
@@ -1085,7 +1098,7 @@ describe("store/index", () => {
     await new Promise((resolve) => setTimeout(resolve));
     expect(useErrorStore().hasError).toBeFalsy();
     expect(new Uint8Array(mockAPI.saveRecord.mock.calls[1][1])).toEqual(
-      new Uint8Array(fs.readFileSync("src/tests/testdata/encoding/utf8.ki2")),
+      normalizeCRLF(fs.readFileSync("src/tests/testdata/encoding/utf8.ki2")),
     );
   });
 

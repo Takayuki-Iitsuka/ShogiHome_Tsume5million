@@ -89,6 +89,11 @@ import { getRelativeEnginePath, resolveEnginePath } from "@/background/usi/path.
 import { fileURLToPath } from "@/background/helpers/url.js";
 import { AppSettingsUpdate } from "@/common/settings/app.js";
 import { convertRecordFiles } from "@/background/file/conversion.js";
+import {
+  buildIndex as buildTsumeIndex,
+  getLines as getTsumeLines,
+  getRandomLines as getRandomTsumeLines,
+} from "@/background/file/tsumeDatabase.js";
 import { BatchConversionSettings } from "@/common/settings/conversion.js";
 import {
   addHistory,
@@ -454,6 +459,45 @@ ipcMain.handle(Background.LOAD_SFEN_FILE, async (event, path: string): Promise<s
     .split(/[\r\n]+/) // split by line
     .filter((line) => line !== ""); // remove empty lines
 });
+
+ipcMain.handle(Background.OPEN_TSUME_DIRECTORY, async (event): Promise<string> => {
+  validateIPCSender(event.senderFrame);
+  getAppLogger().debug("open tsume directory dialog");
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) {
+    throw new Error("Failed to open dialog by unexpected error.");
+  }
+  const ret = await dialog.showOpenDialog(win, {
+    properties: ["openDirectory"],
+  });
+  return ret.canceled ? "" : ret.filePaths[0];
+});
+
+ipcMain.handle(Background.BUILD_TSUME_INDEX, async (event, filePath: string): Promise<number> => {
+  validateIPCSender(event.senderFrame);
+  if (!filePath.endsWith(".sfen")) {
+    throw new Error(`${t.fileExtensionNotSupported}: ${filePath}`);
+  }
+  getAppLogger().debug(`build tsume index: ${filePath}`);
+  return buildTsumeIndex(filePath);
+});
+
+ipcMain.handle(
+  Background.GET_TSUME_LINES,
+  async (event, filePath: string, lineNumbers: number[]): Promise<string[]> => {
+    validateIPCSender(event.senderFrame);
+    return getTsumeLines(filePath, lineNumbers);
+  },
+);
+
+ipcMain.handle(
+  Background.GET_RANDOM_TSUME_LINES,
+  async (event, filePath: string, count: number): Promise<string> => {
+    validateIPCSender(event.senderFrame);
+    const result = await getRandomTsumeLines(filePath, count);
+    return JSON.stringify(result);
+  },
+);
 
 ipcMain.handle(Background.LOAD_APP_SETTINGS, async (event): Promise<string> => {
   validateIPCSender(event.senderFrame);

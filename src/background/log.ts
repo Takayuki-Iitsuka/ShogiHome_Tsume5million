@@ -110,30 +110,13 @@ export function shutdownLoggers(): void {
 
 export function getTailCommand(logType: LogType): string {
   const filePath = getFilePath(logType);
-  switch (process.platform) {
-    case "win32":
-      return `Get-Content -Path "${filePath}" -Wait -Tail 10`;
-    default:
-      return `tail -f "${filePath}"`;
-  }
+  return `Get-Content -Path "${filePath}" -Wait -Tail 10`;
 }
 
 export function tailLogFile(logType: LogType): void {
   const escapedCommand = getTailCommand(logType).replaceAll('"', '\\"');
-  switch (process.platform) {
-    case "win32":
-      child_process.spawn("powershell.exe", [
-        "-Command",
-        `start-process powershell '-NoExit','-Command "${escapedCommand}"'`,
-      ]);
-      break;
-    case "darwin":
-      child_process.spawn("osascript", [
-        "-e",
-        `tell app "Terminal" to do script "${escapedCommand}"`,
-        "-e",
-        `tell app "Terminal" to activate`,
-      ]);
-      break;
-  }
+  child_process.spawn("powershell.exe", [
+    "-Command",
+    `start-process powershell '-NoExit','-Command "${escapedCommand}"'`,
+  ]);
 }

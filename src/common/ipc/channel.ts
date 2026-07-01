@@ -90,6 +90,11 @@ export enum Background {
   OPEN_LOG_FILE = "openLogFile",
   LOG = "log",
   ON_CLOSABLE = "onClosable",
+  // 詰将棋データベース
+  OPEN_TSUME_DIRECTORY = "openTsumeDirectory",
+  BUILD_TSUME_INDEX = "buildTsumeIndex",
+  GET_TSUME_LINES = "getTsumeLines",
+  GET_RANDOM_TSUME_LINES = "getRandomTsumeLines",
 }
 
 export enum Renderer {

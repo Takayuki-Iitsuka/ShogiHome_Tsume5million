@@ -281,6 +281,9 @@ export type AppSettings = {
   // Record Info View
   emptyRecordInfoVisibility: boolean;
 
+  // Tsume Database
+  tsumeDataDirectory: string;
+
   // Low Level
   enableHardwareAcceleration: boolean;
 };
@@ -428,6 +431,7 @@ export function defaultAppSettings(opt?: {
     lastImageExportFilePath: "",
     lastOtherFilePath: "",
     emptyRecordInfoVisibility: true,
+    tsumeDataDirectory: "",
     enableHardwareAcceleration: true,
   };
 }
@@ -458,6 +462,9 @@ export function normalizeAppSettings(
     ...defaultAppSettings(opt),
     ...settings,
   };
+  if (![Language.JA, Language.EN].includes(result.language)) {
+    result.language = Language.JA;
+  }
   // 自動保存先ディレクトリの末尾のスラッシュを削除する。
   result.autoSaveDirectory = removeLastSlash(result.autoSaveDirectory);
   // 旧バージョンでは盤画像に合わせて自動で駒台の色が選ばれていた。

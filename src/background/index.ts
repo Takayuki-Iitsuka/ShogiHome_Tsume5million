@@ -1,6 +1,6 @@
 "use strict";
 
-import { app, BrowserWindow, session, Menu, dialog, protocol } from "electron";
+import { app, session, dialog, protocol } from "electron";
 import { loadAppSettingsOnce } from "@/background/settings.js";
 import {
   getAppLogger,
@@ -23,7 +23,6 @@ import contextMenu from "electron-context-menu";
 import { LogType } from "@/common/log.js";
 import { isLogEnabled } from "@/common/settings/app.js";
 import { createWindow } from "./window/main.js";
-import { spawn } from "child_process";
 import { invoke as invokeHeadless } from "./headless/invoke.js";
 import { setProcessArgs } from "./window/ipc.js";
 import { prefetchWindowsLogicalProcessorCount } from "./proc/state.js";
@@ -91,17 +90,6 @@ if (!appSettings.enableHardwareAcceleration) {
 }
 app.enableSandbox();
 
-app.once("will-finish-launching", () => {
-  getAppLogger().info("on will-finish-launching");
-
-  // macOS の Finder でファイルが開かれた場合には process.argv ではなく open-file イベントからパスを取得する必要がある。
-  app.once("open-file", (event, path) => {
-    getAppLogger().info("on open-file: %s", path);
-    event.preventDefault();
-    setProcessArgs({ ...args, path });
-  });
-});
-
 const quitRetryInterval = 200;
 const quitMaxWaitDuration = 5000;
 let quitWaitElapsed = 0;
@@ -135,18 +123,6 @@ function onMainWindowClosed() {
   app.quit();
 }
 
-app.on("activate", () => {
-  // Do not create a window in headless mode.
-  if (args.type === "headless") {
-    return;
-  }
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow(onMainWindowClosed);
-  }
-});
-
 app.on("web-contents-created", (_, contents) => {
   contents.on("will-navigate", (event) => {
     event.preventDefault();
@@ -164,23 +140,6 @@ async function installElectronDevTools() {
   await installer.default(installer.VUEJS_DEVTOOLS);
 }
 
-// opens a new MacOS App Instance using shell command.
-function openNewInstance() {
-  const appPath = app.getPath("exe").replace("/Contents/MacOS/ShogiHome", "");
-  const child = spawn("open", ["-n", appPath], { detached: true, stdio: "ignore" });
-  child.unref();
-}
-
-// MacOS dock menu for opening multiple ShogiHome Instances.
-const dockMenu = Menu.buildFromTemplate([
-  {
-    label: t.openNewInstance,
-    click() {
-      openNewInstance();
-    },
-  },
-]);
-
 protocol.registerSchemesAsPrivileged([APP_SCHEME, FILE_SCHEME]);
 
 app.whenReady().then(() => {
@@ -195,9 +154,6 @@ app.whenReady().then(() => {
       throw e;
     });
   }
-
-  // Set dock menu (MacOS only)
-  app.dock?.setMenu(dockMenu);
 
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     // Electron 42.2.0 以降では検査後に発行しなおした net.fetch のリクエストも入ってくるようになったため
@@ -217,17 +173,10 @@ app.whenReady().then(() => {
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment() || isTest()) {
-  if (process.platform === "win32") {
-    process.on("message", (data) => {
-      if (data === "graceful-exit") {
-        getAppLogger().info("on graceful-exit message");
-        app.quit();
-      }
-    });
-  } else {
-    process.on("SIGTERM", () => {
-      getAppLogger().info("on SIGTERM");
+  process.on("message", (data) => {
+    if (data === "graceful-exit") {
+      getAppLogger().info("on graceful-exit message");
       app.quit();
-    });
-  }
+    }
+  });
 }

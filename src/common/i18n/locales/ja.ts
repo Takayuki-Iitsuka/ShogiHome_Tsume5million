@@ -878,4 +878,18 @@ export const ja: Texts = {
   heapUsageExceedsNGBMayHang(gb: number): string {
     return `メモリ使用量が ${gb}GB を超えました。増加傾向が続くとハングアップする可能性があります。`;
   },
+  // 詰将棋データベース
+  tsumeDatabase: "詰将棋DB",
+  tumeDataDirectoryNotSet: "詰将棋データのフォルダが設定されていません。",
+  selectTsumeDataDirectory: "フォルダを選択",
+  buildingTsumeIndex: "インデックスを構築中...",
+  randomProblem: "ランダム",
+  loadToBoard: "盤面に設定",
+  problemNumber: "問題番号",
+  mate3: "3手詰め",
+  mate5: "5手詰め",
+  mate7: "7手詰め",
+  mate9: "9手詰め",
+  mate11: "11手詰め",
+  tsumeFileNotFound: "詰将棋ファイルが見つかりません: ",
 };

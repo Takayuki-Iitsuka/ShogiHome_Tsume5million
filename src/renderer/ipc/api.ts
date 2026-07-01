@@ -75,6 +75,14 @@ export interface API {
   convertRecordFiles(settings: BatchConversionSettings): Promise<BatchConversionResult>;
   showSelectSFENDialog(lastPath: string): Promise<string>;
   loadSFENFile(path: string): Promise<string[]>;
+  // 詰将棋データベース
+  showSelectTsumeDirectoryDialog(): Promise<string>;
+  buildTsumeIndex(filePath: string): Promise<number>;
+  getTsumeLines(filePath: string, lineNumbers: number[]): Promise<string[]>;
+  getRandomTsumeLines(
+    filePath: string,
+    count: number,
+  ): Promise<{ sfens: string[]; lineNumbers: number[] }>;
 
   // Book
   showOpenBookDialog(): Promise<string>;
@@ -234,6 +242,14 @@ const api: API = {
   },
   saveBookImportSettings(settings: BookImportSettings): Promise<void> {
     return bridge.saveBookImportSettings(JSON.stringify(settings));
+  },
+
+  // 詰将棋データベース
+  async getRandomTsumeLines(
+    filePath: string,
+    count: number,
+  ): Promise<{ sfens: string[]; lineNumbers: number[] }> {
+    return JSON.parse(await bridge.getRandomTsumeLines(filePath, count));
   },
 
   // Record File

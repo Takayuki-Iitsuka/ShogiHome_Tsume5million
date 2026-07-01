@@ -70,3 +70,33 @@ Issue や Pull Request において自身のアイデアや実装が採用され
 ### 勉強や実績づくりを主目的とした活動
 
 レビューを受けて勉強することを目的に Pull Request を作成したり、OSS へコントリビュートしたという実績を手っ取り早く作るために質の悪い Pull Request を作ることはやめてください。
+
+## TypeScript 7.0 移行中の開発ルール
+
+2026年（皇紀2686年・令和8年）7月以降、この fork では TypeScript 7.0 への移行準備を進めます。
+TypeScript 7.0 stable 版が公開されるまでは、`typescript@next` または release candidate による検証結果を参考情報として扱い、production 依存には固定しません。
+
+TypeScript 関連の Pull Request では、TypeScript 本体だけでなく `vue-tsc`、`typescript-eslint`、`@typescript-eslint/*`、`@vue/eslint-config-typescript` の互換性を確認してください。
+renderer は Vite の `moduleResolution: "Bundler"` を基準にし、Electron background / preload / command 側の module 設定は破壊的変更を避けて段階的に検証します。
+
+最低限、以下のコマンドが通ることを確認してください。
+
+```bash
+npm run lint
+npm test
+npm run build
+npm run electron:compile-all
+```
+
+Bun は package manager / script runner として評価中です。
+Bun を初回導入する場合は `bun install` で `bun.lock` を生成し、以後は `bun install --frozen-lockfile` で再現性を確認してください。
+Bun に関係する変更では、npm の結果に加えて以下も確認してください。
+
+```bash
+bun run lint
+bun run test
+bun run build
+bun run electron:compile-all
+```
+
+Bun 採用が完了するまでは npm と `package-lock.json` を release build の正本として扱います。

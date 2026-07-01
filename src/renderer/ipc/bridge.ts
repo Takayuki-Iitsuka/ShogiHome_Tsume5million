@@ -56,6 +56,11 @@ export interface Bridge {
   showSelectSFENDialog(lastPath: string): Promise<string>;
   loadSFENFile(path: string): Promise<string[]>;
   onOpenRecord(callback: (path: string) => void): void;
+  // 詰将棋データベース
+  showSelectTsumeDirectoryDialog(): Promise<string>;
+  buildTsumeIndex(filePath: string): Promise<number>;
+  getTsumeLines(filePath: string, lineNumbers: number[]): Promise<string[]>;
+  getRandomTsumeLines(filePath: string, count: number): Promise<string>;
 
   // Book
   showOpenBookDialog(): Promise<string>;

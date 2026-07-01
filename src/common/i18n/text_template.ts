@@ -806,4 +806,18 @@ export type Texts = {
   memoryUsageIsLessThanNPercent(n: number): string;
   totalUSIHashExceedsNPercentOfMemory(n: number): string;
   heapUsageExceedsNGBMayHang(gb: number): string;
+  // 詰将棋データベース
+  tsumeDatabase: string;
+  tumeDataDirectoryNotSet: string;
+  selectTsumeDataDirectory: string;
+  buildingTsumeIndex: string;
+  randomProblem: string;
+  loadToBoard: string;
+  problemNumber: string;
+  mate3: string;
+  mate5: string;
+  mate7: string;
+  mate9: string;
+  mate11: string;
+  tsumeFileNotFound: string;
 };

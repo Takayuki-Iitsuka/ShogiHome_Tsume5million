@@ -51,7 +51,6 @@ import { getCPUInfo } from "@/background/proc/state.js";
 import { outputStatsHTML } from "@/background/stats/html.js";
 
 const isWin = process.platform === "win32";
-const isMac = process.platform === "darwin";
 
 const stateChangeCallbacks: ((appState: AppState, busy: boolean) => void)[] = [];
 
@@ -127,7 +126,9 @@ function createMenuTemplate(window: BrowserWindow) {
           [AppState.NORMAL],
           "CmdOrCtrl+Shift+E",
         ),
+        menuItem(t.tsumeDatabase, MenuEvent.TSUME_DATABASE, [AppState.NORMAL]),
         { type: "separator" },
+
         {
           label: `${t.openAutoSaveDirectory}`,
           submenu: [
@@ -146,7 +147,7 @@ function createMenuTemplate(window: BrowserWindow) {
           ],
         },
         { type: "separator" },
-        isMac ? { role: "close", label: t.close } : { role: "quit", label: t.quit },
+        { role: "quit", label: t.quit },
       ],
     },
     {
@@ -155,7 +156,7 @@ function createMenuTemplate(window: BrowserWindow) {
         {
           label: t.copyRecordAll,
           submenu: [
-            menuItem(t.asKIF, MenuEvent.COPY_RECORD, null, isMac ? undefined : "CmdOrCtrl+C"),
+            menuItem(t.asKIF, MenuEvent.COPY_RECORD, null, "CmdOrCtrl+C"),
             menuItem(t.asKI2, MenuEvent.COPY_RECORD_KI2, null),
             menuItem(t.asCSA, MenuEvent.COPY_RECORD_CSA, null),
             menuItem(t.asUSIUntilCurrentMove, MenuEvent.COPY_RECORD_USI_BEFORE, null),
@@ -182,12 +183,7 @@ function createMenuTemplate(window: BrowserWindow) {
             menuItem(t.asBOD, MenuEvent.COPY_BOARD_BOD, null),
           ],
         },
-        menuItem(
-          t.pasteRecordOrPosition,
-          MenuEvent.PASTE_RECORD,
-          [AppState.NORMAL],
-          isMac ? undefined : "CmdOrCtrl+V",
-        ),
+        menuItem(t.pasteRecordOrPosition, MenuEvent.PASTE_RECORD, [AppState.NORMAL], "CmdOrCtrl+V"),
         {
           label: t.pasteRecordMerge,
           submenu: [
@@ -331,16 +327,6 @@ function createMenuTemplate(window: BrowserWindow) {
           ],
         },
         menuItem(t.changePieceSet, MenuEvent.CHANGE_PIECE_SET, [AppState.POSITION_EDITING]),
-        // NOTE:
-        //   Mac ではこれらのショートカットがメニューに無いとテキスト編集時のショートカット操作ができない。
-        //   https://github.com/sunfish-shogi/shogihome/issues/694
-        { type: "separator", visible: isMac },
-        { role: "copy", accelerator: "CmdOrCtrl+C", visible: isMac },
-        { role: "paste", accelerator: "CmdOrCtrl+V", visible: isMac },
-        { role: "cut", accelerator: "CmdOrCtrl+X", visible: isMac },
-        { role: "undo", accelerator: "CmdOrCtrl+Z", visible: isMac },
-        { role: "redo", accelerator: "CmdOrCtrl+Shift+Z", visible: isMac },
-        { role: "selectAll", accelerator: "CmdOrCtrl+A", visible: isMac },
       ],
     },
     {
@@ -364,18 +350,7 @@ function createMenuTemplate(window: BrowserWindow) {
       submenu: [
         menuItem(t.startEndResearch, MenuEvent.TOGGLE_RESEARCH, null, "CmdOrCtrl+R"),
         { type: "separator" },
-        menuItem(
-          t.analyze,
-          MenuEvent.START_ANALYSIS,
-          [AppState.NORMAL],
-          // NOTE:
-          //   Mac では Cmd+A を SelectAll に割り当てる必要があるため、ここで CmdOrCtrl+A を使用することはできない。
-          //   テキスト入力欄にフォーカスしていない場合は、レンダラー側で Cmd+A をハンドリングして解析ダイアログを出すので
-          //   ここで Accelerator を割り当てなくても Cmd+A で解析ダイアログは表示される。
-          //   しかし、メニューバーに何らかの表示がないとユーザーがショートカットキーの割り当てに気づかないので、
-          //   Mac では Cmd+Y でも解析ダイアログを表示できるようにする。
-          isMac ? "CmdOrCtrl+Y" : "CmdOrCtrl+A",
-        ),
+        menuItem(t.analyze, MenuEvent.START_ANALYSIS, [AppState.NORMAL], "CmdOrCtrl+A"),
         menuItem(t.stopAnalysis, MenuEvent.STOP_ANALYSIS, [AppState.ANALYSIS]),
       ],
     },
@@ -499,23 +474,18 @@ function createMenuTemplate(window: BrowserWindow) {
         {
           type: "separator",
         },
-        isMac
-          ? {
-              label: t.toggleFullScreen,
-              role: "togglefullscreen",
+        {
+          label: t.toggleFullScreen,
+          click: () => {
+            const enable = !window.isFullScreen();
+            window.setFullScreen(enable);
+            if (enable && !fullScreenNotiSent) {
+              sendMessage({ text: t.youCanExitFullScreenByPressing("F11") });
+              fullScreenNotiSent = true;
             }
-          : {
-              label: t.toggleFullScreen,
-              click: () => {
-                const enable = !window.isFullScreen();
-                window.setFullScreen(enable);
-                if (enable && !fullScreenNotiSent) {
-                  sendMessage({ text: t.youCanExitFullScreenByPressing("F11") });
-                  fullScreenNotiSent = true;
-                }
-              },
-              accelerator: "F11",
-            },
+          },
+          accelerator: "F11",
+        },
         menuItem(t.flipBoard, MenuEvent.FLIP_BOARD, null, "CmdOrCtrl+T"),
         {
           label: t.defaultFontSize,
@@ -650,21 +620,21 @@ function createMenuTemplate(window: BrowserWindow) {
               click: () => {
                 tailLogFile(LogType.APP);
               },
-              enabled: isWin || isMac,
+              enabled: isWin,
             },
             {
               label: t.tailUSILog + (isWin ? " (PowerShell)" : ""),
               click: () => {
                 tailLogFile(LogType.USI);
               },
-              enabled: isWin || isMac,
+              enabled: isWin,
             },
             {
               label: t.tailCSALog + (isWin ? " (PowerShell)" : ""),
               click: () => {
                 tailLogFile(LogType.CSA);
               },
-              enabled: isWin || isMac,
+              enabled: isWin,
             },
             {
               type: "separator",
@@ -858,13 +828,6 @@ function createMenuTemplate(window: BrowserWindow) {
       ],
     },
   ];
-
-  if (isMac) {
-    menuTemplate.unshift({
-      label: app.name,
-      submenu: [{ role: "about" }, { type: "separator" }, { role: "quit" }],
-    });
-  }
 
   return menuTemplate;
 }

@@ -1,14 +1,12 @@
-import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { promisify } from "node:util";
 
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration
  */
 const config = {
-  productName: "ShogiHome",
+  productName: "ShogiHome Tsume5million",
   extraMetadata: {
     main: "dist/packed/background.js",
   },
@@ -30,25 +28,7 @@ const config = {
     "!node_modules/**/*",
   ],
   afterPack: async function (context) {
-    if (context.electronPlatformName === "darwin") {
-      const appPath = path.join(
-        context.appOutDir,
-        `${context.packager.appInfo.productFilename}.app`,
-      );
-      await removeUnnecessaryFilesForMac(appPath);
-    } else {
-      await removeUnnecessaryFiles(context.appOutDir);
-    }
-  },
-  afterSign: async function (context) {
-    // macOS では Fuses 適用後に署名をしないと起動できない
-    if (context.electronPlatformName === "darwin") {
-      const appPath = path.join(
-        context.appOutDir,
-        `${context.packager.appInfo.productFilename}.app`,
-      );
-      await signMacApp(appPath);
-    }
+    await removeUnnecessaryFiles(context.appOutDir);
   },
   win: {
     fileAssociations: {
@@ -59,40 +39,6 @@ const config = {
   nsis: {
     allowElevation: false,
     packElevateHelper: false,
-  },
-  mac: {
-    electronLanguages: ["en", "ja"],
-    fileAssociations: {
-      name: "Kifu",
-      ext: ["kif", "kifu", "ki2", "ki2u", "csa", "jkf"],
-    },
-    extendInfo: {
-      CFBundleDocumentTypes: [
-        {
-          CFBundleTypeExtensions: ["kif", "kifu", "ki2", "ki2u", "csa", "jkf"],
-          CFBundleTypeName: "Kifu",
-          CFBundleTypeRole: "Editor",
-          LSHandlerRank: "Owner",
-        },
-      ],
-    },
-  },
-  linux: {
-    target: ["AppImage", "deb"],
-    executableName: "shogihome",
-    icon: "public/favicon.png",
-    maintainer: "Kubo Ryosuke <sunfish-shogi@users.noreply.github.com>",
-    fileAssociations: [
-      { name: "KIF", ext: "kif" },
-      { name: "KIFU", ext: "kifu" },
-      { name: "KI2", ext: "ki2" },
-      { name: "KI2U", ext: "ki2u" },
-      { name: "CSA", ext: "csa" },
-      { name: "JKF", ext: "jkf" },
-    ],
-  },
-  deb: {
-    packageName: "shogihome",
   },
   publish: null,
 
@@ -111,11 +57,6 @@ const config = {
 
 export default config;
 
-async function signMacApp(appPath) {
-  await promisify(execFile)("codesign", ["--force", "--sign", "-", "--deep", appPath]);
-  await promisify(execFile)("codesign", ["--verify", "--deep", "--strict", "--verbose=2", appPath]);
-}
-
 async function removeUnnecessaryFiles(appOutDir) {
   const localeDir = path.join(appOutDir, "locales");
   for (const file of await fs.promises.readdir(localeDir)) {
@@ -126,18 +67,6 @@ async function removeUnnecessaryFiles(appOutDir) {
       default:
         await fs.promises.unlink(path.join(localeDir, file));
         break;
-    }
-  }
-}
-
-async function removeUnnecessaryFilesForMac(appPath) {
-  const resourceDir = path.join(
-    appPath,
-    "Contents/Frameworks/Electron Framework.framework/Versions/A/Resources",
-  );
-  for (const file of await fs.promises.readdir(resourceDir)) {
-    if (file.endsWith(".lproj") && file !== "en.lproj" && file !== "ja.lproj") {
-      await fs.promises.rm(path.join(resourceDir, file), { recursive: true, force: true });
     }
   }
 }

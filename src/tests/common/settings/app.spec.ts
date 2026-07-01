@@ -4,6 +4,7 @@ import {
   defaultAppSettings,
   PieceImageType,
 } from "@/common/settings/app.js";
+import { Language } from "@/common/i18n/index.js";
 
 describe("settings/app", () => {
   it("normalize", () => {
@@ -12,6 +13,14 @@ describe("settings/app", () => {
       autoSaveDirectory: "/tmp",
     });
     expect(result).toStrictEqual(defaultAppSettings());
+  });
+
+  it("normalize unsupported language", () => {
+    const result = normalizeAppSettings({
+      ...defaultAppSettings(),
+      language: "unsupported" as Language,
+    });
+    expect(result.language).toBe(Language.JA);
   });
 
   it("pieceImageBaseURL", () => {

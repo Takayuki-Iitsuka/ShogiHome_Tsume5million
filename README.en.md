@@ -70,6 +70,10 @@ If you build ShogiHome yourself, please read [Security for ShogiHome Development
 ### Requirements
 
 - Node.js
+- Bun (optional; candidate development toolchain for the TypeScript 7.0 migration)
+
+As of July 2026 (Koki 2686 / Reiwa 8), npm remains the canonical package manager.
+Bun is being evaluated as a faster installer and script runner, while release builds continue to use the npm workflow as the baseline.
 
 ### Setup
 
@@ -77,6 +81,18 @@ If you build ShogiHome yourself, please read [Security for ShogiHome Development
 git clone https://github.com/sunfish-shogi/shogihome.git
 cd shogihome
 npm ci
+```
+
+With Bun:
+
+```
+bun install
+```
+
+After `bun.lock` is created, use a reproducible install:
+
+```
+bun install --frozen-lockfile
 ```
 
 ### Launch
@@ -87,6 +103,13 @@ npm run electron:serve
 
 # Web App
 npm run serve
+```
+
+With Bun, use the same script names:
+
+```
+bun run electron:serve
+bun run serve
 ```
 
 ### Release Build
@@ -102,6 +125,14 @@ npm run electron:portable
 npm run build
 ```
 
+During Bun evaluation:
+
+```
+bun run electron:build
+bun run electron:portable
+bun run build
+```
+
 ### Unit Tests
 
 ```
@@ -112,11 +143,24 @@ npm test
 npm run coverage
 ```
 
+During Bun evaluation:
+
+```
+bun run test
+bun run coverage
+```
+
 ### Lint
 
 ```
 npm run lint
 ```
+
+### TypeScript 7.0 Migration
+
+TypeScript 7.0 will be pinned after a stable release is available.
+Before that, validation should use `typescript@next` or release candidates and must cover `vue-tsc`, `typescript-eslint`, Vite, Vitest, and Electron compatibility.
+See [TypeScript 7.0 Migration Plan](./Prompt/TypeScript7_Migration_Plan.md) and [Technologies](./specs/technologies.md).
 
 ## CLI Tools
 

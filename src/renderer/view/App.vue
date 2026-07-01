@@ -23,6 +23,7 @@
     <BatchConversionDialog v-if="store.appState === AppState.BATCH_CONVERSION_DIALOG" />
     <PositionImageExportDialog v-if="store.appState === AppState.EXPORT_POSITION_IMAGE_DIALOG" />
     <AppSettingsDialog v-if="store.isAppSettingsDialogVisible" />
+    <TsumeDatabaseDialog v-if="store.isTsumeDatabaseDialogVisible" />
     <PasteDialog v-if="store.appState === AppState.PASTE_DIALOG" />
     <LaunchUSIEngineDialog v-if="store.appState === AppState.LAUNCH_USI_ENGINE_DIALOG" />
     <ConnectToCSAServerDialog v-if="store.appState === AppState.CONNECT_TO_CSA_SERVER_DIALOG" />
@@ -84,6 +85,7 @@ import ResearchDialog from "@/renderer/view/dialog/ResearchDialog.vue";
 import USIEngineManagementDialog from "@/renderer/view/dialog/USIEngineManagementDialog.vue";
 import PositionImageExportDialog from "@/renderer/view/dialog/PositionImageExportDialog.vue";
 import AppSettingsDialog from "@/renderer/view/dialog/AppSettingsDialog.vue";
+import TsumeDatabaseDialog from "@/renderer/view/dialog/TsumeDatabaseDialog.vue";
 import PasteDialog from "@/renderer/view/dialog/PasteDialog.vue";
 import BusyMessage from "@/renderer/view/dialog/BusyMessage.vue";
 import ConfirmDialog from "@/renderer/view/dialog/ConfirmDialog.vue";
