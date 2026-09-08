@@ -12,7 +12,6 @@ jobs:
     runs-on: windows-latest
     env:
       USI_ENGINE_JSON: AppData\Roaming\electron-shogi\usi_engine.json
-      USI_CSA_BRIDGE_TMP: ${{ runner.temp }}\usi-csa-bridge
     steps:
       # Setup
       - run: git config --global core.autocrlf false
@@ -27,6 +26,11 @@ jobs:
       - run: npm -g i tsx
 
       # usi-csa-bridge
+      # runner コンテキストは jobs.<job_id>.env では利用できないため、
+      # ここで GITHUB_ENV に書き出してから後続ステップで参照する。
+      - name: Set USI_CSA_BRIDGE_TMP
+        run: echo "USI_CSA_BRIDGE_TMP=${{ runner.temp }}\usi-csa-bridge" >> $env:GITHUB_ENV
+        shell: pwsh
       - run: npm run usi-csa-bridge:build
       - run: Move-Item -Path dist\command\usi-csa-bridge -Destination $env:USI_CSA_BRIDGE_TMP
         shell: pwsh
