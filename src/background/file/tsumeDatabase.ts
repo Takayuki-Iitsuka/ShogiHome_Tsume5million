@@ -1,32 +1,78 @@
 import { createReadStream, promises as fs } from "node:fs";
+import { getAppLogger } from "@/background/log.js";
+import { normalizeSfen } from "@/common/tsume.js";
 
-// ファイルパスごとのバイトオフセットインデックス（初回読み取り後にメモリキャッシュ）
-const indexCache = new Map<string, BigInt64Array>();
+// 行頭バイトオフセットの一覧と、最終行の終端計算に使うファイルサイズをまとめて保持する。
+// 78MB程度のSFENファイルでも、オフセットはNumber.MAX_SAFE_INTEGER（約9PB）に
+// 十分収まるため、BigIntではなく通常のnumberを保持するFloat64Arrayを用いる。
+type TsumeIndex = {
+  offsets: Float64Array;
+  fileSize: number;
+};
+
+// ファイルパスごとのインデックス（初回読み取り後にメモリキャッシュ）。
+const indexCache = new Map<string, TsumeIndex>();
+
+// 構築中のインデックスをファイルパスごとに共有し、同時呼び出しでの二重走査を防ぐ。
+const buildingPromises = new Map<string, Promise<TsumeIndex>>();
 
 /**
- * SFENファイルを走査して各行のバイトオフセットを記録し、総行数を返す。
- * 2回目以降はキャッシュを使用する。
+ * 指定ファイルの行頭オフセットインデックスを取得する。
+ * キャッシュ済みなら即座に返し、構築中なら同じPromiseを共有する。
  */
-export async function buildIndex(filePath: string): Promise<number> {
-  if (indexCache.has(filePath)) {
-    return indexCache.get(filePath)!.length;
+function loadIndex(filePath: string): Promise<TsumeIndex> {
+  const cached = indexCache.get(filePath);
+  if (cached) {
+    return Promise.resolve(cached);
   }
+  const inFlight = buildingPromises.get(filePath);
+  if (inFlight) {
+    return inFlight;
+  }
+  getAppLogger().debug("tsume index: build start: [%s]", filePath);
+  const beginTime = Date.now();
+  const promise = scanOffsets(filePath)
+    .then((index) => {
+      indexCache.set(filePath, index);
+      getAppLogger().debug(
+        "tsume index: build completed: [%s] lines=%d elapsed=%dms",
+        filePath,
+        index.offsets.length,
+        Date.now() - beginTime,
+      );
+      return index;
+    })
+    .catch((e) => {
+      getAppLogger().error("tsume index: build failed: [%s]: %s", filePath, e);
+      throw e;
+    })
+    .finally(() => {
+      buildingPromises.delete(filePath);
+    });
+  buildingPromises.set(filePath, promise);
+  return promise;
+}
 
-  const offsets: bigint[] = [];
+/**
+ * SFENファイルを1パスで走査し、各行の行頭バイトオフセットとファイルサイズを収集する。
+ */
+async function scanOffsets(filePath: string): Promise<TsumeIndex> {
+  const offsets: number[] = [];
   const stream = createReadStream(filePath);
-  let offset = BigInt(0);
-  let lineStart = BigInt(0);
+  let offset = 0; // 現在処理中チャンクの先頭の絶対バイト位置
+  let lineStart = 0; // 次に記録する行頭の絶対バイト位置
   let firstChunk = true;
 
   await new Promise<void>((resolve, reject) => {
     stream.on("data", (rawChunk: string | Buffer) => {
       const chunk = Buffer.isBuffer(rawChunk) ? rawChunk : Buffer.from(rawChunk);
-      // BOMスキップ（UTF-8 BOM: EF BB BF）
       let start = 0;
+      // 先頭チャンクのUTF-8 BOM（EF BB BF）をスキップする。
+      // BOMはファイル先頭のバイトなので、チャンク先頭位置(offset)は変えず、
+      // 最初の行頭だけをBOM直後（3バイト目）に進める。
       if (firstChunk && chunk[0] === 0xef && chunk[1] === 0xbb && chunk[2] === 0xbf) {
         start = 3;
-        offset += BigInt(3);
-        lineStart = offset;
+        lineStart = 3;
       }
       firstChunk = false;
 
@@ -34,13 +80,13 @@ export async function buildIndex(filePath: string): Promise<number> {
         if (chunk[i] === 0x0a) {
           // '\n'
           offsets.push(lineStart);
-          lineStart = offset + BigInt(i) + BigInt(1);
+          lineStart = offset + i + 1;
         }
       }
-      offset += BigInt(chunk.length);
+      offset += chunk.length;
     });
     stream.on("end", () => {
-      // 最終行が改行なしで終わる場合
+      // 最終行が改行で終わらない場合の行頭も記録する。
       if (lineStart < offset) {
         offsets.push(lineStart);
       }
@@ -49,132 +95,92 @@ export async function buildIndex(filePath: string): Promise<number> {
     stream.on("error", reject);
   });
 
-  const arr = new BigInt64Array(offsets.map((v) => BigInt(v)));
-  indexCache.set(filePath, arr);
-  return arr.length;
+  // 走査終了時の offset はファイル総バイト数に等しい。
+  return { offsets: Float64Array.from(offsets), fileSize: offset };
+}
+
+/**
+ * SFENファイルを走査して各行のバイトオフセットを記録し、総行数を返す。
+ * 2回目以降はキャッシュを使用する。
+ */
+export async function buildIndex(filePath: string): Promise<number> {
+  return (await loadIndex(filePath)).offsets.length;
 }
 
 /**
  * 指定した行番号（1始まり）のSFEN文字列を取得する。
- * buildIndex を事前に呼んでいない場合は自動的に構築する。
+ * インデックス未構築の場合は自動的に構築する。
+ * 範囲外の行番号には空文字列を返す。
  */
 export async function getLines(filePath: string, lineNumbers: number[]): Promise<string[]> {
-  if (!indexCache.has(filePath)) {
-    await buildIndex(filePath);
-  }
-  const offsets = indexCache.get(filePath)!;
+  const { offsets, fileSize } = await loadIndex(filePath);
   const totalLines = offsets.length;
-
-  const results: string[] = [];
-  for (const lineNum of lineNumbers) {
-    if (lineNum < 1 || lineNum > totalLines) {
-      results.push("");
-      continue;
-    }
-    const startOffset = Number(offsets[lineNum - 1]);
-    const endOffset = lineNum < totalLines ? Number(offsets[lineNum]) : undefined;
-    const length = endOffset !== undefined ? endOffset - startOffset : undefined;
-
-    const buf = Buffer.alloc(length ?? 512);
-    const fd = await fs.open(filePath, "r");
-    try {
-      const { bytesRead } = await fd.read(buf, 0, buf.length, startOffset);
-      let line = buf.slice(0, bytesRead).toString("utf-8");
-      // 改行文字を除去
-      const nl = line.indexOf("\n");
-      if (nl >= 0) {
-        line = line.slice(0, nl);
-      }
-      results.push(normalizeSfen(line.replace(/\r$/, "").trim()));
-    } finally {
-      await fd.close();
-    }
+  if (totalLines === 0 || lineNumbers.length === 0) {
+    return lineNumbers.map(() => "");
   }
-  return results;
+
+  const fd = await fs.open(filePath, "r");
+  try {
+    const results: string[] = [];
+    for (const lineNum of lineNumbers) {
+      if (lineNum < 1 || lineNum > totalLines) {
+        results.push("");
+        continue;
+      }
+      const startOffset = offsets[lineNum - 1];
+      // 次の行頭（最終行はファイル末尾）までを1行分として読み取る。
+      const endOffset = lineNum < totalLines ? offsets[lineNum] : fileSize;
+      const length = endOffset - startOffset;
+      if (length <= 0) {
+        results.push("");
+        continue;
+      }
+      const buf = Buffer.alloc(length);
+      const { bytesRead } = await fd.read(buf, 0, length, startOffset);
+      // 末尾の改行・空白を除去してSFENを正規化する。
+      const line = buf.subarray(0, bytesRead).toString("utf-8").trim();
+      results.push(normalizeSfen(line));
+    }
+    return results;
+  } finally {
+    await fd.close();
+  }
 }
 
 /**
- * リザーバーサンプリングで count 件をランダムに取得する。
- * インデックスが構築済みの場合はO(n)走査を避けてランダムアクセスする。
- * 未構築の場合は1パスで行う。
+ * 1以上 totalLines 以下の行番号から重複なく count 件を一様ランダムに選び、昇順で返す。
+ * count が総行数以上の場合は全行の行番号を返す。
+ *
+ * インデックス構築済みで総行数が既知のため、リザーバーサンプリング（O(総行数)）は不要。
+ * 仮想配列 a[i] = i に対する部分Fisher-Yatesシャッフルを疎なMapで表現することで、
+ * 総行数に依存せず O(count) で選出する。約100万行のファイルから1件選ぶ場合でも
+ * 乱数生成は1回で済む。
+ */
+function sampleLineNumbers(totalLines: number, count: number): number[] {
+  const n = Math.min(count, totalLines);
+  // 交換が発生した位置だけを記録し、未記録の位置は a[i] = i とみなす。
+  const swapped = new Map<number, number>();
+  const picked: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(Math.random() * (totalLines - i));
+    picked.push((swapped.get(j) ?? j) + 1); // 0始まりの添字を行番号（1始まり）へ変換
+    swapped.set(j, swapped.get(i) ?? i); // a[j] に a[i] を退避する
+  }
+  return picked.sort((a, b) => a - b); // ファイルシーク効率化のため昇順
+}
+
+/**
+ * count 件をランダムに取得する。
+ * ファイルシーク効率化のため、行番号の昇順で読み取って返す。
  */
 export async function getRandomLines(
   filePath: string,
   count: number,
 ): Promise<{ sfens: string[]; lineNumbers: number[] }> {
-  if (!indexCache.has(filePath)) {
-    await buildIndex(filePath);
-  }
-  const offsets = indexCache.get(filePath)!;
-  const totalLines = offsets.length;
-
-  if (count >= totalLines) {
-    // 件数が総行数以下なら全件返す
-    const allNums = Array.from({ length: totalLines }, (_, i) => i + 1);
-    const sfens = await getLines(filePath, allNums);
-    return { sfens, lineNumbers: allNums };
-  }
-
-  // リザーバーサンプリング（インデックスの行番号に対して実施）
-  const reservoir: number[] = [];
-  for (let i = 0; i < count; i++) {
-    reservoir.push(i + 1);
-  }
-  for (let i = count; i < totalLines; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
-    if (j < count) {
-      reservoir[j] = i + 1;
-    }
-  }
-  reservoir.sort((a, b) => a - b); // ファイルシーク効率化のため昇順
-
-  const sfens = await getLines(filePath, reservoir);
-  return { sfens, lineNumbers: reservoir };
-}
-
-/**
- * 後手番（w）SFENを先手番（b）SFENに正規化する。
- * 盤面を180度回転・駒色反転して「攻め方先手」の形に統一する。
- * 先手番の場合はそのまま返す。
- */
-export function normalizeSfen(sfen: string): string {
-  const parts = sfen.split(" ");
-  if (parts.length < 4 || parts[1] !== "w") {
-    return sfen;
-  }
-  const [board, , hands, ...rest] = parts;
-
-  // 盤面を段ごとに分割し逆順に並べ替え、各段内の升を逆順にする
-  const flippedBoard = board
-    .split("/")
-    .reverse()
-    .map((rank) => {
-      const tokens: string[] = [];
-      let i = 0;
-      while (i < rank.length) {
-        if (rank[i] === "+") {
-          tokens.push("+" + rank[i + 1]);
-          i += 2;
-        } else {
-          tokens.push(rank[i]);
-          i++;
-        }
-      }
-      return tokens.reverse().join("");
-    })
-    .join("/")
-    // 駒色を反転（先手↔後手）
-    .replace(/[a-zA-Z]/g, (c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()));
-
-  // 持ち駒の駒色を反転
-  const flippedHands =
-    hands === "-"
-      ? "-"
-      : hands.replace(/[a-zA-Z]/g, (c) =>
-          c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase(),
-        );
-
-  return [flippedBoard, "b", flippedHands, ...rest].join(" ");
+  const { offsets } = await loadIndex(filePath);
+  const lineNumbers = sampleLineNumbers(offsets.length, count);
+  const sfens = await getLines(filePath, lineNumbers);
+  return { sfens, lineNumbers };
 }
 
 /**
@@ -182,6 +188,7 @@ export function normalizeSfen(sfen: string): string {
  */
 export function clearIndexCache(): void {
   indexCache.clear();
+  buildingPromises.clear();
 }
 
 /**

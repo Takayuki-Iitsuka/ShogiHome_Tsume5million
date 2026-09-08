@@ -880,16 +880,16 @@ export const en: Texts = {
   },
   // Tsume Database
   tsumeDatabase: "Tsume DB",
-  tumeDataDirectoryNotSet: "Tsume data directory is not set.",
+  tsumeDataDirectoryNotSet: "Tsume data directory is not set.",
   selectTsumeDataDirectory: "Select Folder",
   buildingTsumeIndex: "Building index...",
   randomProblem: "Random",
   loadToBoard: "Load to Board",
   problemNumber: "Problem #",
-  mate3: "3-move Mate",
-  mate5: "5-move Mate",
-  mate7: "7-move Mate",
-  mate9: "9-move Mate",
-  mate11: "11-move Mate",
-  tsumeFileNotFound: "Tsume file not found: ",
+  mateN(n: number) {
+    return `${n}-move Mate`;
+  },
+  tsumeFileNotFound(path: string) {
+    return `Tsume file not found. [${path}]`;
+  },
 };

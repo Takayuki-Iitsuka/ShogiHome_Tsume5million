@@ -880,16 +880,16 @@ export const ja: Texts = {
   },
   // 詰将棋データベース
   tsumeDatabase: "詰将棋DB",
-  tumeDataDirectoryNotSet: "詰将棋データのフォルダが設定されていません。",
+  tsumeDataDirectoryNotSet: "詰将棋データのフォルダが設定されていません。",
   selectTsumeDataDirectory: "フォルダを選択",
   buildingTsumeIndex: "インデックスを構築中...",
   randomProblem: "ランダム",
   loadToBoard: "盤面に設定",
   problemNumber: "問題番号",
-  mate3: "3手詰め",
-  mate5: "5手詰め",
-  mate7: "7手詰め",
-  mate9: "9手詰め",
-  mate11: "11手詰め",
-  tsumeFileNotFound: "詰将棋ファイルが見つかりません: ",
+  mateN(n: number) {
+    return `${n}手詰め`;
+  },
+  tsumeFileNotFound(path: string) {
+    return `詰将棋ファイルが見つかりません。 [${path}]`;
+  },
 };

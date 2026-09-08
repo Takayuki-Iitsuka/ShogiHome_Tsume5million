@@ -808,16 +808,12 @@ export type Texts = {
   heapUsageExceedsNGBMayHang(gb: number): string;
   // 詰将棋データベース
   tsumeDatabase: string;
-  tumeDataDirectoryNotSet: string;
+  tsumeDataDirectoryNotSet: string;
   selectTsumeDataDirectory: string;
   buildingTsumeIndex: string;
   randomProblem: string;
   loadToBoard: string;
   problemNumber: string;
-  mate3: string;
-  mate5: string;
-  mate7: string;
-  mate9: string;
-  mate11: string;
-  tsumeFileNotFound: string;
+  mateN(n: number): string;
+  tsumeFileNotFound(path: string): string;
 };

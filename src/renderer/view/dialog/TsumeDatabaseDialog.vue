@@ -5,7 +5,7 @@
 
       <!-- フォルダ未設定時の選択UI -->
       <div v-if="!dataDirectory" class="section">
-        <div class="notice">{{ t.tumeDataDirectoryNotSet }}</div>
+        <div class="notice">{{ t.tsumeDataDirectoryNotSet }}</div>
         <button @click="onSelectDirectory">{{ t.selectTsumeDataDirectory }}</button>
       </div>
 
@@ -15,12 +15,12 @@
         <div class="section">
           <div class="mate-buttons">
             <button
-              v-for="num in mateNums"
+              v-for="num in tsumeMateCounts"
               :key="num"
               :class="{ selected: mateNum === num }"
               @click="onSelectMate(num)"
             >
-              {{ mateLabel(num) }}
+              {{ t.mateN(num) }}
             </button>
           </div>
         </div>
@@ -52,7 +52,7 @@
           </div>
         </template>
 
-        <div v-else class="section notice">{{ t.tsumeFileNotFound }}{{ currentFilePath }}</div>
+        <div v-else class="section notice">{{ t.tsumeFileNotFound(currentFilePath) }}</div>
       </template>
 
       <!-- 下部ボタン -->
@@ -78,20 +78,19 @@ import { useErrorStore } from "@/renderer/store/error";
 import { computed, onMounted, ref, watch } from "vue";
 import DialogFrame from "./DialogFrame.vue";
 import { join as pathJoin } from "@/renderer/helpers/path";
-
-type MateNum = 3 | 5 | 7 | 9 | 11;
+import { tsumeMateCounts, tsumeFileName, type TsumeMateCount } from "@/common/tsume";
 
 const store = useStore();
 const appSettings = useAppSettings();
+const errorStore = useErrorStore();
 
-const mateNums: MateNum[] = [3, 5, 7, 9, 11];
-const mateNum = ref<MateNum>(3);
+const mateNum = ref<TsumeMateCount>(3);
 const dataDirectory = computed(() => appSettings.tsumeDataDirectory);
 const currentFilePath = computed(() => {
   if (!dataDirectory.value) {
     return "";
   }
-  return pathJoin(dataDirectory.value, `mate${mateNum.value}.sfen`);
+  return pathJoin(dataDirectory.value, tsumeFileName(mateNum.value));
 });
 
 const lineCount = ref(0);
@@ -100,20 +99,11 @@ const inputLineNumber = ref(1);
 const currentSfen = ref("");
 const isBuilding = ref(false);
 
-const mateLabel = (num: MateNum): string => {
-  switch (num) {
-    case 3:
-      return t.mate3;
-    case 5:
-      return t.mate5;
-    case 7:
-      return t.mate7;
-    case 9:
-      return t.mate9;
-    case 11:
-      return t.mate11;
-  }
-};
+// 手数の切り替えなどで複数の非同期要求が並行したとき、先に発行した要求の応答が
+// 後から届いて新しい状態を上書きしないよう、要求ごとの通し番号で新旧を判定する。
+// 特にインデックス構築は大きなファイルでは数秒かかるため取り違えが起こり得る。
+let indexRequestId = 0;
+let problemRequestId = 0;
 
 onMounted(async () => {
   if (dataDirectory.value) {
@@ -122,51 +112,77 @@ onMounted(async () => {
 });
 
 watch(currentFilePath, async () => {
+  problemRequestId++; // 対象ファイルが変わるため実行中の問題読み込みの結果は破棄する
   lineCount.value = 0;
   currentLineNumber.value = 0;
+  inputLineNumber.value = 1;
   currentSfen.value = "";
   if (dataDirectory.value) {
     await buildIndex();
   }
 });
 
+// 現在の問題（SFENと行番号）を一括更新する。
+function setCurrentProblem(sfen: string, lineNum: number) {
+  currentSfen.value = sfen;
+  currentLineNumber.value = lineNum;
+  inputLineNumber.value = lineNum;
+}
+
 async function buildIndex() {
+  const requestId = ++indexRequestId;
   isBuilding.value = true;
   lineCount.value = 0;
   try {
-    lineCount.value = await api.buildTsumeIndex(currentFilePath.value);
+    const count = await api.buildTsumeIndex(currentFilePath.value);
+    if (requestId !== indexRequestId) {
+      return; // より新しい要求が発行済みのため破棄する
+    }
+    lineCount.value = count;
   } catch (e) {
-    useErrorStore().add(e);
+    if (requestId === indexRequestId) {
+      errorStore.add(e);
+    }
   } finally {
-    isBuilding.value = false;
+    if (requestId === indexRequestId) {
+      isBuilding.value = false;
+    }
   }
 }
 
 async function loadLine(lineNum: number) {
+  const requestId = ++problemRequestId;
   try {
-    const lines = await api.getTsumeLines(currentFilePath.value, [lineNum]);
-    currentSfen.value = lines[0] || "";
-    currentLineNumber.value = lineNum;
-    inputLineNumber.value = lineNum;
+    const [sfen] = await api.getTsumeLines(currentFilePath.value, [lineNum]);
+    if (requestId !== problemRequestId) {
+      return; // より新しい要求が発行済みのため破棄する
+    }
+    setCurrentProblem(sfen || "", lineNum);
   } catch (e) {
-    useErrorStore().add(e);
+    if (requestId === problemRequestId) {
+      errorStore.add(e);
+    }
   }
 }
 
-const onSelectMate = async (num: MateNum) => {
+const onSelectMate = (num: TsumeMateCount) => {
   mateNum.value = num;
 };
 
 const onRandom = async () => {
+  const requestId = ++problemRequestId;
   try {
-    const result = await api.getRandomTsumeLines(currentFilePath.value, 1);
-    if (result.sfens.length > 0) {
-      currentSfen.value = result.sfens[0];
-      currentLineNumber.value = result.lineNumbers[0];
-      inputLineNumber.value = result.lineNumbers[0];
+    const { sfens, lineNumbers } = await api.getRandomTsumeLines(currentFilePath.value, 1);
+    if (requestId !== problemRequestId) {
+      return; // より新しい要求が発行済みのため破棄する
+    }
+    if (sfens.length > 0) {
+      setCurrentProblem(sfens[0], lineNumbers[0]);
     }
   } catch (e) {
-    useErrorStore().add(e);
+    if (requestId === problemRequestId) {
+      errorStore.add(e);
+    }
   }
 };
 
@@ -183,7 +199,14 @@ const onNext = async () => {
 };
 
 const onLineNumberInput = async () => {
-  const n = Math.max(1, Math.min(lineCount.value, inputLineNumber.value));
+  // v-model.number は空入力などで数値以外（"" や NaN）になり得るため、
+  // その場合は現在の問題番号に戻して読み込みを行わない。
+  const raw: unknown = inputLineNumber.value;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    inputLineNumber.value = currentLineNumber.value;
+    return;
+  }
+  const n = Math.max(1, Math.min(lineCount.value, Math.floor(raw)));
   await loadLine(n);
 };
 
@@ -202,7 +225,7 @@ const onSelectDirectory = async () => {
       await buildIndex();
     }
   } catch (e) {
-    useErrorStore().add(e);
+    errorStore.add(e);
   }
 };
 
@@ -245,7 +268,6 @@ const onClose = () => {
 }
 .nav-row .total {
   white-space: nowrap;
-  color: var(--text-color-secondary, #888);
 }
 input.number {
   text-align: right;
@@ -255,15 +277,15 @@ input.number {
   font-family: monospace;
   font-size: 0.85em;
   word-break: break-all;
-  color: var(--text-color-secondary, #888);
   border: 1px solid var(--dialog-border-color);
   padding: 4px 6px;
   border-radius: 4px;
   min-height: 1.4em;
 }
-.building {
-  color: var(--text-color-secondary, #888);
-}
+/* 補足的なテキストの色をまとめて指定する。 */
+.nav-row .total,
+.current-sfen,
+.building,
 .notice {
   color: var(--text-color-secondary, #888);
 }

@@ -109,6 +109,7 @@ import { SessionStates } from "@/common/advanced/monitor.js";
 import { createCommandWindow } from "./prompt.js";
 import { PromptTarget } from "@/common/advanced/prompt.js";
 import { Command, CommandType } from "@/common/advanced/command.js";
+import { tsumeFileExtension } from "@/common/tsume.js";
 import { fetch } from "@/background/helpers/http.js";
 import * as uri from "@/common/uri.js";
 import { openPath } from "@/background/helpers/electron.js";
@@ -473,11 +474,17 @@ ipcMain.handle(Background.OPEN_TSUME_DIRECTORY, async (event): Promise<string> =
   return ret.canceled ? "" : ret.filePaths[0];
 });
 
-ipcMain.handle(Background.BUILD_TSUME_INDEX, async (event, filePath: string): Promise<number> => {
-  validateIPCSender(event.senderFrame);
-  if (!filePath.endsWith(".sfen")) {
+// 詰将棋データファイル以外を読み取らせないための検証。
+// 全ての詰将棋関連ハンドラーで共通に適用する。
+function validateTsumeFilePath(filePath: string): void {
+  if (!filePath.endsWith(tsumeFileExtension)) {
     throw new Error(`${t.fileExtensionNotSupported}: ${filePath}`);
   }
+}
+
+ipcMain.handle(Background.BUILD_TSUME_INDEX, async (event, filePath: string): Promise<number> => {
+  validateIPCSender(event.senderFrame);
+  validateTsumeFilePath(filePath);
   getAppLogger().debug(`build tsume index: ${filePath}`);
   return buildTsumeIndex(filePath);
 });
@@ -486,6 +493,7 @@ ipcMain.handle(
   Background.GET_TSUME_LINES,
   async (event, filePath: string, lineNumbers: number[]): Promise<string[]> => {
     validateIPCSender(event.senderFrame);
+    validateTsumeFilePath(filePath);
     return getTsumeLines(filePath, lineNumbers);
   },
 );
@@ -494,6 +502,7 @@ ipcMain.handle(
   Background.GET_RANDOM_TSUME_LINES,
   async (event, filePath: string, count: number): Promise<string> => {
     validateIPCSender(event.senderFrame);
+    validateTsumeFilePath(filePath);
     const result = await getRandomTsumeLines(filePath, count);
     return JSON.stringify(result);
   },
