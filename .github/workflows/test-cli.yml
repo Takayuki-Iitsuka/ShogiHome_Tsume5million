@@ -41,5 +41,7 @@ jobs:
         shell: pwsh
       - name: Test usi-csa-bridge
         timeout-minutes: 1
-        run: $env:USI_CSA_BRIDGE_TMP\e2e\run-all
+        # $env:VAR の直後にパスを連結すると PowerShell の構文エラーになるため文字列展開し、
+        # シバン行(#!/bin/bash)を解釈できるよう bash 経由で実行する。
+        run: bash "$env:USI_CSA_BRIDGE_TMP\e2e\run-all"
         shell: pwsh
