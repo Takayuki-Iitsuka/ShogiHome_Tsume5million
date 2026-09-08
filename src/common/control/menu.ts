@@ -76,4 +76,3 @@ export enum MenuEvent {
   EXPORT_BOOK_AS_SBK = "exportBookAsSbk",
   TSUME_DATABASE = "tsumeDatabase",
 }
-
