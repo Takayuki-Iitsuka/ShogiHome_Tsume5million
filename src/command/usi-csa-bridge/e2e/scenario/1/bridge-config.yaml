@@ -1,6 +1,6 @@
 usi:
   name: USI Replay Engine
-  path: usi-replay-engine
+  path: usi-replay-engine.cmd
   options:
     UseBook:
       type: check
