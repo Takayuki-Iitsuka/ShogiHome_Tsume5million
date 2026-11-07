@@ -11,11 +11,16 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6.0.3
       - uses: actions/setup-node@v6.4.0
         with:
-          node-version: lts/*
+          # Pin to the same Node.js version as the Test workflow so the
+          # audit results do not change when a new LTS line is released.
+          # Do not use Node.js v24.16.0 or later
+          # See: https://github.com/electron/electron/issues/51619
+          node-version: v24.15.0
           cache: "npm"
       - run: npm install -g npm@latest
       - run: npm version
